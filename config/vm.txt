@@ -1,0 +1,11 @@
+
+
+#install pip 
+python -m pip install --upgrade pip
+sudo pip3 install grpcio
+sudo pip3 install grpcio-tools
+sudo apt-get install protobuf-compiler
+
+python -m grpc_tools.protoc --proto_path=./ --python_out=./ --grpc_python_out=./ database.proto
+
+

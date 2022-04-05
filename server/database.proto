@@ -1,0 +1,18 @@
+syntax = "proto3";
+package redisDatabase;
+
+message Request {
+  string message = 1;
+  optional string val = 2;
+}
+
+message Reply {
+  string message = 1;
+}
+
+service redisOperations {
+  rpc get (Request) returns (Reply) {}
+  rpc set (Request) returns (Reply) {}
+  rpc exists (Request) returns (Reply) {}
+  rpc delete (Request) returns (Reply) {}
+}

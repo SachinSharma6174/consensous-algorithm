@@ -1,0 +1,36 @@
+Product Database = {items:[{item_id:
+                            item_name:
+                            category:
+                            Keywords:
+                            Condition:
+                            Sale_Price:
+                            Quantity:
+                            seller_id:},
+                            ]}
+
+Seller Database = { "sellers": [{ "seller_name" :
+                                  "seller Id" :
+                                  "Seller feedback" :
+                                  "Number of items sold" : },
+                                  ]}
+
+
+Buyer Database = {"buyer": [{ "buyer_name" : 
+                               "buyer_Id" :
+                               "Number of items purchased:"
+}]}
+
+
+Shopping cart = { "buyer_id" : {item1:Quantity, item2:Quantity},
+}
+
+username : [ password , user_id ]
+username : [ ]
+user_id : 1  
+
+What All I need from redis - 
+
+exists 
+set 
+get
+

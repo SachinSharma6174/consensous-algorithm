@@ -1,0 +1,53 @@
+<definitions name = "Transaction"
+   targetNamespace = "localhost://wsdl/TransactionService.wsdl"
+   xmlns = "http://schemas.xmlsoap.org/wsdl/"
+   xmlns:soap = "http://schemas.xmlsoap.org/wsdl/soap/"
+   xmlns:tns = "http://www.examples.com/wsdl/HelloService.wsdl"
+   xmlns:xsd = "http://www.w3.org/2001/XMLSchema">
+ 
+   <message name = "getTransactionRequest">
+      <part name = "CardNumber" type = "xsd:string"/>
+      <part name = "Name" type = "xsd:string"/>
+      <part name = "expiration_data" type = "xsd:string"/>
+   </message>
+	
+   <message name = "getTransactionResult">
+      <part name = "success" type = "xsd:string"/>
+   </message>
+
+   <portType name = "makeTransaction">
+      <operation name = "transaction_trail">
+         <input message = "tns:getTransactionRequest"/>
+         <output message = "tns:getTransactionResult"/>
+      </operation>
+   </portType>
+
+   <binding name = "transctionService" type = "tns:makeTransaction">
+      <soap:binding style = "rpc"
+         transport = "http://schemas.xmlsoap.org/soap/http"/>
+      <operation name = "transaction_trail">
+         <soap:operation soapAction = "transaction_trail"/>
+         <input>
+            <soap:body
+               encodingStyle = "http://schemas.xmlsoap.org/soap/encoding/"
+               namespace = "urn:examples:transactionservice"
+               use = "encoded"/>
+         </input>
+		
+         <output>
+            <soap:body
+               encodingStyle = "http://schemas.xmlsoap.org/soap/encoding/"
+               namespace = "urn:examples:transactionservice"
+               use = "encoded"/>
+         </output>
+      </operation>
+   </binding>
+
+   <service name = "Transaction_service">
+      <documentation>WSDL File for HelloService</documentation>
+      <port binding = "tns:transctionService" name = "makeTransaction">
+         <soap:address
+            location = "http://localhost/makeTransaction/" />
+      </port>
+   </service>
+</definitions>
