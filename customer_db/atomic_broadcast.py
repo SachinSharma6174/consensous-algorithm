@@ -28,8 +28,4 @@ class AtomicBroadcastProtocol():
 		# message = json.loads(message.decode("utf-8"))
 
 		#  Implementation for Handling Request_message
-		
-
-
-
-            
+		return "ok"
