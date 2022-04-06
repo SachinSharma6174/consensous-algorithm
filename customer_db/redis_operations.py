@@ -4,9 +4,16 @@ import json
 import pickle
 import database_pb2
 import database_pb2_grpc
+from server import sendBroadcastMessage
+
+
+
+UDP_SOCKET_IP_LIST = ["127.0.0.1", "127.0.0.1", "127.0.0.1", "127.0.0.1"]
+UDP_SOCKET_PORTS_LIST = [2222, 2223, 2224, 2225]
 
 
 class RedisOperations(database_pb2_grpc.redisOperationsServicer):
+
     
     def __init__(self):
         self.redis_client = redis.Redis(
@@ -42,14 +49,24 @@ class RedisOperations(database_pb2_grpc.redisOperationsServicer):
         print(request.message+" check this "+request.val, flush=True)
         key = request.message
         val = request.val
-        val = self.redis_client.set(key,val)
+        # val = self.redis_client.set(key,val)
+        client_request = {'key':key, 'value':val , 'function':'set'}
+        sendBroadcastMessage(client_request)
         print(f'received request: {request} with context {context}', flush=True)
+        val = "OK"
         return database_pb2.Reply(message=str(val))
     
     def delete(self, request, context):
         print("Delete called ", flush=True)
         print(request.message, flush=True)
         key = request.message
-        val = self.redis_client.delete(key)
+        # val = self.redis_client.delete(key)
+        client_request = {'key':key, 'function':'delete'}
+        sendBroadcastMessage(client_request)
         print(f'received request: {request} with context {context}', flush=True)
+        val = "OK"
         return database_pb2.Reply(message=str(val))
+
+
+
+
