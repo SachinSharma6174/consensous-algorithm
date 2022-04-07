@@ -16,6 +16,7 @@ global_seq_recved = -1
 # To check before assigning global seq number 
 local_seq_commit = [-1,-1,-1,-1]
 last_global_seq_recvd = [-1,-1,-1,-1]
+
 local_seq_num = -1
 node_id = 0
 sock = None
@@ -27,7 +28,8 @@ recieveBuffer = []
 def process_seq_message(data):
     global recieveBuffer, global_seq_num, global_seq_recved, local_seq_commit, local_seq_num, node_id
     global global_seq_to_req_map, request_id_to_msg_map, last_global_seq_recvd
-    atomic_broadcast.processSequenceMessage(
+    global_seq_num, global_seq_recved, global_seq_to_req_map, local_seq_commit, 
+    last_global_seq_recvd, recieveBuffer = atomic_broadcast.processSequenceMessage(
         node_id, sock, data, local_seq_num, global_seq_num, global_seq_recved, 
         local_seq_commit, global_seq_to_req_map, request_id_to_msg_map, last_global_seq_recvd,
         recieveBuffer, UDP_SOCKET_IP_LIST, UDP_SOCKET_PORTS_LIST)
@@ -41,7 +43,10 @@ def process_recvd_message(data):
             	node_id, sock, data, local_seq_num, global_seq_num, global_seq_recved, 
                 local_seq_commit, global_seq_to_req_map, request_id_to_msg_map, last_global_seq_recvd,
             	recieveBuffer, UDP_SOCKET_IP_LIST, UDP_SOCKET_PORTS_LIST)
-
+    
+    
+def process_retransmit_message(data):
+    return 
 
 def process_req_retransmit_message(data):
     #data = {'request_id':key,'messageType':message_type,'requestor_id':node_id}
@@ -103,6 +108,8 @@ if __name__ == "__main__":
             process_req_retransmit_message(data)
         if (data["messageType"] == "sequence_restransmit_message"):
             process_seq_retransmit_message(data)
+        if (data["messageType"] == "process_restransmit_message"):
+            process_retransmit_message(data)
             
      
             

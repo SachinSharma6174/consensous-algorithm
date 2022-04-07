@@ -43,7 +43,20 @@ class AtomicBroadcastProtocol():
                 print(e)
                 
     def calculate_majority(self,last_global_seq_recvd, global_seq_num):
-        return True
+        num_of_true = 0
+        total_node = len(last_global_seq_recvd)
+        for i in last_global_seq_recvd:
+            if int(i) < global_seq_num:
+                num_of_true = num_of_true + 1
+        if num_of_true > (total_node/2):
+            return True
+        return False
+    
+    def delete_request(self, buffer, request_id):
+        for i in buffer:
+            if i['request_id'] == request_id:
+                buffer.remove(i)
+                return buffer
     
     def process_seq_message(self, node_id, sock, message, local_seq_num, global_seq_num, \
         global_seq_recved, local_seq_commit, global_seq_to_req_map, request_id_to_msg_map, \
@@ -64,7 +77,7 @@ class AtomicBroadcastProtocol():
             last_global_seq_recvd[sender]  = global_seq_curr
         
         while  global_seq_num  <= global_seq_curr :
-            # TODO: calculate majority global seq number
+            # calculate majority global seq number
             if (self.calculate_majority(last_global_seq_recvd, global_seq_num)):
                 if (global_seq_num + 1) in global_seq_to_req_map: 
                     request_id = global_seq_to_req_map[global_seq_num + 1]
@@ -77,8 +90,8 @@ class AtomicBroadcastProtocol():
                         # of the sender using client request ID 
                         global_seq_num = global_seq_num + 1
                         local_seq_commit[req_messg_sender] = req_local_seq_sender
-                        # TODO : Delete the req from the receive buffer queue 
-                        
+                        # Delete the req from the receive buffer queue 
+                        recieveBuffer = self.delete_request(recieveBuffer,request_id)
                     else: 
                         #Ask for retransmit of request message
                         self.retransmit_message(request_id['sender_id'], request_id, node_id, 
@@ -88,6 +101,7 @@ class AtomicBroadcastProtocol():
                     global_seq_holder_node = (global_seq_num + 1) % total_proc
                     self.retransmit_message(global_seq_holder_node, global_seq_num + 1, node_id, 
                                                 "sequence_restransmit_message", sock, udpIpList, udpPortList)
+        return global_seq_num, global_seq_recved, global_seq_to_req_map, local_seq_commit, last_global_seq_recvd, recieveBuffer
     
     def processRecieveMessage(self, node_id, sock, message, local_seq_num, global_seq_num, \
         global_seq_recved, local_seq_commit, global_seq_to_req_map, request_id_to_msg_map, \
@@ -125,6 +139,8 @@ class AtomicBroadcastProtocol():
                     #Ask for restransmit of next seq
                     self.retransmit_message(sender_id, key, node_id, "request_retransmit_message",
                                             sock, udpIpList, udpPortList)
+                    # Add the one you don't have but don't increment the global_seq_num 
+                    global_seq_to_req_map[global_seq_num+1] = key
                 # add the data back to the queue as it wasn't processed
                 recieveBuffer.insert(0,data)
         return last_global_seq_recvd, global_seq_to_req_map,recieveBuffer
@@ -132,4 +148,4 @@ class AtomicBroadcastProtocol():
             
             
 # TODO : Figure out in case of retransmission for a request message 
-# that wasn't there but should be assigned global seq number 
+# that wasn't there but should be assigned global seq number
