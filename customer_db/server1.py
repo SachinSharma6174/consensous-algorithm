@@ -11,7 +11,7 @@ class udp_server():
     #UDP_SOCKET_PORTS_LIST = [2222,2223, 2224, 2225]
     UDP_SOCKET_PORTS_LIST = [2222,2223]
 
-    CURRENT_SERVER_UDP_PORT = 2222
+    CURRENT_SERVER_UDP_PORT = 2223
     CURRENT_SERVER_IP = "0.0.0.0"
 
     # Meta data to send 
@@ -126,6 +126,7 @@ if __name__ == "__main__":
             
 
         
+
 
 
 

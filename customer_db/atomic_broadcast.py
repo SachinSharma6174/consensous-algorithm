@@ -1,6 +1,6 @@
-from msilib import sequence
 import redis
 import json
+import socket
 
 class AtomicBroadcastProtocol():
     
@@ -23,7 +23,8 @@ class AtomicBroadcastProtocol():
                 response = self.redis_client.set(key,val)
         return response
     
-    def retransmit_message(self,sender_id, key, node_id, sock, message_type, udpIpList, udpPortList):
+    def retransmit_message(self,sender_id, key, node_id, message_type, udpIpList, udpPortList):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         if message_type == 'request_retransmit_message':
             data = {'request_id':key,'messageType':message_type,'requestor_id':node_id}
             sock.sendto(json.dumps(data).encode(), (udpIpList[sender_id], udpPortList[sender_id]))
@@ -32,10 +33,14 @@ class AtomicBroadcastProtocol():
             sock.sendto(json.dumps(data).encode(), (udpIpList[sender_id], udpPortList[sender_id]))
         return
     
-    def send_sequence_message(self, global_seq, request_id, sock, udpIpList, udpPortList):
+    def send_sequence_message(self, global_seq, request_id, udpIpList, udpPortList):
         sequence_msg = {'global_seq_num': global_seq, 'request_id': request_id,'messageType':'sequence_message'}
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         for ip,port in zip(udpIpList,udpPortList):
             try:
+                if port == 2222:
+                    continue
+                print("Called from send_sequence message :")
                 print("UDP target IP: %s" % ip)
                 print("UDP target port: %s" % port)
                 sock.sendto(json.dumps(sequence_msg).encode(), (ip, port))
@@ -58,7 +63,7 @@ class AtomicBroadcastProtocol():
                 buffer.remove(i)
                 return buffer
     
-    def process_seq_message(self, node_id, sock, message, local_seq_num, global_seq_num, \
+    def process_seq_message(self, node_id, message, local_seq_num, global_seq_num, \
         global_seq_recved, local_seq_commit, global_seq_to_req_map, request_id_to_msg_map, \
         last_global_seq_recvd, recieveBuffer, udpIpList, udpPortList):
         total_proc = len(udpIpList)
@@ -93,23 +98,23 @@ class AtomicBroadcastProtocol():
                         # Delete the req from the receive buffer queue 
                         recieveBuffer = self.delete_request(recieveBuffer,request_id)
                     else: 
-                        #Ask for retransmit of request message
+                        # Ask for retransmit of request message
                         self.retransmit_message(request_id['sender_id'], request_id, node_id, 
                                                 "request_retransmit_message", sock, udpIpList, udpPortList)
                 else :
                     # Ask for retransmit for global seq message 
                     global_seq_holder_node = (global_seq_num + 1) % total_proc
                     self.retransmit_message(global_seq_holder_node, global_seq_num + 1, node_id, 
-                                                "sequence_restransmit_message", sock, udpIpList, udpPortList)
+                                                "sequence_restransmit_message", udpIpList, udpPortList)
         return global_seq_num, global_seq_recved, global_seq_to_req_map, local_seq_commit, last_global_seq_recvd, recieveBuffer
     
-    def processRecieveMessage(self, node_id, sock, message, local_seq_num, global_seq_num, \
+    def processRecieveMessage(self, node_id, message, local_seq_num, global_seq_num, \
         global_seq_recved, local_seq_commit, global_seq_to_req_map, request_id_to_msg_map, \
         last_global_seq_recvd, recieveBuffer, udpIpList, udpPortList):
         total_proc = len(udpIpList)
         
         
-        #data = {"request_id": request_id, "data": request, 'messageType':'request_message', \
+        # data = {"request_id": request_id, "data": request, 'messageType':'request_message', \
         # 'global_seq_num':global_seq_num,'global_seq_recved':global_seq_recved}
         
         # Update meta data info 
@@ -127,18 +132,20 @@ class AtomicBroadcastProtocol():
             #     # check if its the next local seq number for the sender 
             if sender_seq == local_seq_commit[sender_id] + 1:
                 # send Sequence message for sender_seq 
-                self.send_sequence_message(global_seq_num+1, data['request_id'], sock, udpIpList, udpPortList)
+                self.send_sequence_message(global_seq_num+1, data['request_id'], udpIpList, udpPortList)
             else : 
                 # check if the next_seq exists in buffer 
                 next_seq = local_seq_commit[sender_id] + 1
                 key = {'sender_id' : sender_id, 'local_seq_num': next_seq}
+                print("Check the dict ")
+                print(str(request_id_to_msg_map))
                 if key in request_id_to_msg_map.keys():
-                    self.send_sequence_message(global_seq_num+1, key, sock, udpIpList, udpPortList)
+                    self.send_sequence_message(global_seq_num+1, key, udpIpList, udpPortList)
                     global_seq_to_req_map[global_seq_num+1] = key
                 else:
-                    #Ask for restransmit of next seq
+                    # Ask for restransmit of next seq
                     self.retransmit_message(sender_id, key, node_id, "request_retransmit_message",
-                                            sock, udpIpList, udpPortList)
+                                            udpIpList, udpPortList)
                     # Add the one you don't have but don't increment the global_seq_num 
                     global_seq_to_req_map[global_seq_num+1] = key
                 # add the data back to the queue as it wasn't processed

@@ -4,7 +4,8 @@ import json
 import pickle
 import database_pb2
 import database_pb2_grpc
-from server import sendBroadcastMessage
+from server import udp_server
+import traceback
 
 
 
@@ -23,6 +24,7 @@ class RedisOperations(database_pb2_grpc.redisOperationsServicer):
             socket_timeout=None
         )
         self.set_user_id()
+        self.server = udp_server()
     
     def set_user_id(self):
         if self.redis_client.exists("User_ID") == 0:
@@ -47,11 +49,16 @@ class RedisOperations(database_pb2_grpc.redisOperationsServicer):
     def set(self, request, context):
         print("Set called ", flush=True)
         print(request.message+" check this "+request.val, flush=True)
-        key = request.message
-        val = request.val
-        # val = self.redis_client.set(key,val)
-        client_request = {'key':key, 'value':val , 'function':'set'}
-        sendBroadcastMessage(client_request)
+        try:
+            key = request.message
+            val = request.val
+            # val = self.redis_client.set(key,val)
+            client_request = {'key':key, 'value':val , 'function':'set'}
+            self.server.sendBroadcastMessage(client_request)
+        except Exception as e :
+            traceback.print_exc()
+            print("Exception has occured {}".format(str(e)))
+            
         print(f'received request: {request} with context {context}', flush=True)
         val = "OK"
         return database_pb2.Reply(message=str(val))
@@ -59,10 +66,14 @@ class RedisOperations(database_pb2_grpc.redisOperationsServicer):
     def delete(self, request, context):
         print("Delete called ", flush=True)
         print(request.message, flush=True)
-        key = request.message
-        # val = self.redis_client.delete(key)
-        client_request = {'key':key, 'function':'delete'}
-        sendBroadcastMessage(client_request)
+        try:
+            key = request.message
+            # val = self.redis_client.delete(key)
+            client_request = {'key':key, 'function':'delete'}
+            self.server.sendBroadcastMessage(client_request)
+        except Exception as e:
+            traceback.print_exc()
+            print("Exception has occured {}".format(str(e)))
         print(f'received request: {request} with context {context}', flush=True)
         val = "OK"
         return database_pb2.Reply(message=str(val))

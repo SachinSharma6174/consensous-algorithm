@@ -84,17 +84,17 @@ def main():
     item = [{"name":"Pen","category_id":0,"keywords":["pen","stationary","ink","pencil","school supplies"],"condition":"new","sale_price":2.5,'quantity':5},\
         {"name":"Pencil","category_id":0,"keywords":["pencil","stationary","ink","pencil","school supplies"],"condition":"new","sale_price":1,'quantity':10}]
     
-    #response = put_item(seller_id,item)
+    response = put_item(seller_id,item)
    
-    update_price(seller_id,1,2)
+    #update_price(seller_id,1,2)
 
-    remove_item(seller_id,0,3)
+    #remove_item(seller_id,0,3)
 
     #printProductDB()
 
-    display_item(seller_id)
+    #display_item(seller_id)
     
-    logout(seller_id)
+    #logout(seller_id)
 
   
 if __name__=="__main__":

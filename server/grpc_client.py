@@ -13,6 +13,7 @@ class GRPCClient():
                 response = stub.exists(data)
                 return response.message        
         except Exception as e:
+            traceback.print_exc()
             return ("Error has occured "+str(e))
         
         
@@ -35,6 +36,7 @@ class GRPCClient():
                 response = stub.get(data)
                 return response.message        
         except Exception as e:
+            traceback.print_exc()
             return ("Error has occured "+str(e))
         
     def delete(key):
@@ -45,4 +47,5 @@ class GRPCClient():
                 response = stub.delete(data)
                 return response.message        
         except Exception as e:
+            traceback.print_exc()
             return ("Error has occured "+str(e))
