@@ -77,9 +77,10 @@ def main():
     
     #response = create_user("nisha","test")
     
-    response = login_user("nisha","test")
+    # response = login_user("nisha","test")
     
-    seller_id = response['seller_id']
+    # seller_id = response['seller_id']
+    seller_id = 199
     
     item = [{"name":"Pen","category_id":0,"keywords":["pen","stationary","ink","pencil","school supplies"],"condition":"new","sale_price":2.5,'quantity':5},\
         {"name":"Pencil","category_id":0,"keywords":["pencil","stationary","ink","pencil","school supplies"],"condition":"new","sale_price":1,'quantity':10}]
