@@ -23,6 +23,7 @@ class AtomicBroadcastProtocol():
                 response = self.redis_client.set(key,val)
         return response
     
+    
     def retransmit_message(self,sender_id, key, node_id, message_type, udpIpList, udpPortList):
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         if message_type == 'request_retransmit_message':
@@ -33,12 +34,12 @@ class AtomicBroadcastProtocol():
             sock.sendto(json.dumps(data).encode(), (udpIpList[sender_id], udpPortList[sender_id]))
         return
     
-    def send_sequence_message(self, global_seq, request_id, udpIpList, udpPortList):
+    def send_sequence_message(self, global_seq, request_id, udpIpList, udpPortList, node_id):
         sequence_msg = {'global_seq_num': global_seq, 'request_id': request_id,'messageType':'sequence_message'}
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         for ip,port in zip(udpIpList,udpPortList):
             try:
-                if port == 2222:
+                if port == udpPortList[node_id]:
                     continue
                 print("Called from send_sequence message : {}".format(str(sequence_msg)))
                 print("UDP target IP: %s" % ip)
@@ -66,14 +67,18 @@ class AtomicBroadcastProtocol():
     def process_seq_message(self, node_id, message, local_seq_num, global_seq_num, \
         global_seq_recved, local_seq_commit, global_seq_to_req_map, request_id_to_msg_map, \
         last_global_seq_recvd, recieveBuffer, udpIpList, udpPortList):
+        
         total_proc = len(udpIpList)
         
         #Message type
         #sequence_msg = {'global_seq_num': global_seq, 'request_id': request_id,'messageType':'sequence_message'}
-        
-        global_seq_curr = message['global_seq_num']
-        global_seq_to_req_map[global_seq_curr] = message['request_id']
-        sender = message['request_id']['sender_id']
+ 
+        if message['messageType'] == 'sequence_message':
+            global_seq_curr = message['global_seq_num']
+            global_seq_to_req_map[global_seq_curr] = message['request_id']
+            sender = message['request_id']['sender_id']
+        else: 
+            global_seq_curr = message['last_global_seq_revd']
         #Check if the last one
         if global_seq_curr == global_seq_recved + 1:
             global_seq_recved = global_seq_curr
@@ -100,7 +105,7 @@ class AtomicBroadcastProtocol():
                     else: 
                         # Ask for retransmit of request message
                         self.retransmit_message(request_id['sender_id'], request_id, node_id, 
-                                                "request_retransmit_message", sock, udpIpList, udpPortList)
+                                                "request_retransmit_message", udpIpList, udpPortList)
                 else :
                     # Ask for retransmit for global seq message 
                     global_seq_holder_node = (global_seq_num + 1) % total_proc
@@ -132,7 +137,7 @@ class AtomicBroadcastProtocol():
             #     # check if its the next local seq number for the sender 
             if sender_seq == local_seq_commit[sender_id] + 1:
                 # send Sequence message for sender_seq 
-                self.send_sequence_message(global_seq_num+1, data['request_id'], udpIpList, udpPortList)
+                self.send_sequence_message(global_seq_num+1, data['request_id'], udpIpList, udpPortList, node_id)
             else : 
                 # check if the next_seq exists in buffer 
                 next_seq = local_seq_commit[sender_id] + 1
@@ -151,8 +156,3 @@ class AtomicBroadcastProtocol():
                 # add the data back to the queue as it wasn't processed
                 recieveBuffer.insert(0,data)
         return last_global_seq_recvd, global_seq_to_req_map,recieveBuffer
-                
-            
-            
-# TODO : Figure out in case of retransmission for a request message 
-# that wasn't there but should be assigned global seq number
