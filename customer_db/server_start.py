@@ -1,7 +1,7 @@
-from concurrent import futures
 import grpc
 import database_pb2_grpc
 from redis_operations import RedisOperations
+from concurrent import futures
 
 class Server(database_pb2_grpc.redisOperationsServicer):
 

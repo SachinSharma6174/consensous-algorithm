@@ -7,7 +7,7 @@ from atomic_broadcast import AtomicBroadcastProtocol
 class udp_server():
     # TODO : Filter SELF IP while sending 
     #UDP_SOCKET_IP_LIST = ["127.0.0.1","127.0.0.1", "127.0.0.1", "127.0.0.1"]
-    UDP_SOCKET_IP_LIST = ["127.0.0.1","127.0.0.1"]
+    UDP_SOCKET_IP_LIST = ["127.0.0.1","10.128.0.59"]
     #UDP_SOCKET_PORTS_LIST = [2222,2223, 2224, 2225]
     UDP_SOCKET_PORTS_LIST = [2222,2223]
 
@@ -32,8 +32,8 @@ class udp_server():
 
 
     def process_seq_message(self,data):
-        self.last_global_seq_recvd, self.recieveBuffer = self.abcast.processSequenceMessage(
-        self.node_id, self.data, self.local_seq_num, self.global_seq_num, self.global_seq_recved, 
+        self.last_global_seq_recvd, self.recieveBuffer = self.abcast.process_seq_message(
+        self.node_id, data, self.local_seq_num, self.global_seq_num, self.global_seq_recved, 
         self.local_seq_commit, self.global_seq_to_req_map, self.request_id_to_msg_map, self.last_global_seq_recvd,
         self.recieveBuffer, self.UDP_SOCKET_IP_LIST, self.UDP_SOCKET_PORTS_LIST)
 
@@ -77,6 +77,7 @@ class udp_server():
                         (self.UDP_SOCKET_IP_LIST[self.send_node_id], self.UDP_SOCKET_PORTS_LIST[self.send_node_id])) 
  
     def sendBroadcastMessage(self,request):
+        print("Okay cool")
         request_id = {"sender_id": self.node_id,'local_seq_num':self.local_seq_num}
         data = {"request_id": request_id, "data": request, 'messageType':'request_message', \
             'global_seq_num':self.global_seq_num,'global_seq_recved':self.global_seq_recved}
@@ -85,9 +86,10 @@ class udp_server():
             try:
                 if port == self.CURRENT_SERVER_UDP_PORT:
                     continue
+                print("Check the message data {}".format(data))
                 print("UDP target IP: %s" % ip)
                 print("UDP target port: %s" % port)
-                sock.sendto(json.dumps(request).encode(), (ip, port))
+                sock.sendto(json.dumps(data).encode(), (ip, port))
             except Exception as e:
                 print(e)
         self.process_recvd_message(data)

@@ -40,7 +40,7 @@ class AtomicBroadcastProtocol():
             try:
                 if port == 2222:
                     continue
-                print("Called from send_sequence message :")
+                print("Called from send_sequence message : {}".format(str(sequence_msg)))
                 print("UDP target IP: %s" % ip)
                 print("UDP target port: %s" % port)
                 sock.sendto(json.dumps(sequence_msg).encode(), (ip, port))
