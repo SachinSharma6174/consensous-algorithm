@@ -1,6 +1,6 @@
 import time
 from urllib import response
-import redis
+# import redis
 import json
 import pickle
 import database_pb2
@@ -11,18 +11,18 @@ import sys, requests
 class RedisOperations(database_pb2_grpc.redisOperationsServicer):
     
     def __init__(self):
-        self.redis_client = redis.Redis(
-            host='127.0.0.1',
-            port=6379,
-            db=0,
-            socket_timeout=None
-        )
-        self.addr = '127.0.0.1'
+        # self.redis_client = redis.Redis(
+        #     host='127.0.0.1',
+        #     port=6379,
+        #     db=0,
+        #     socket_timeout=None
+        # )
+        self.addr = 'http://127.0.0.1:5000'
         self.set_user_id()
     
     def set_user_id(self):
-        if self.redis_client.exists("User_ID") == 0:
-            self.redis_client.set("User_ID","1000")
+        if self.exists__raft(self.addr,"User_ID") == 0:
+            self.put__raft(self.addr,"User_ID","1000")
     
     def exists(self, request, context):
         print("Exists called ",flush=True)

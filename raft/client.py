@@ -56,20 +56,17 @@ def get(addr, key):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 3:
-        # addr, key
-        # get
-        addr = sys.argv[1]
-        key = sys.argv[2]
-        get(addr, key)
-    elif len(sys.argv) == 4:
-        # addr, key value
-        # put
-        addr = sys.argv[1]
-        key = sys.argv[2]
-        val = sys.argv[3]
-        put(addr, key, val)
-    else:
-        print("PUT usage: python3 client.py address 'key' 'value'")
-        print("GET usage: python3 client.py address 'key'")
-        print("Format: address: http://ip:port")
+    # addr, key
+    # get
+    addr = "http://127.0.0.1:5000"
+    # addr = sys.argv[1]
+    key = "Nisha"
+    get(addr, key)
+    # addr, key value
+    # put
+    val = 1000
+    put(addr, key, val)
+    # else:
+    #     print("PUT usage: python3 client.py address 'key' 'value'")
+    #     print("GET usage: python3 client.py address 'key'")
+    #     print("Format: address: http://ip:port")

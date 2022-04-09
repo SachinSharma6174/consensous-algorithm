@@ -35,6 +35,7 @@ class inventory():
         # check if item is already there. 
         item_ids = []
         data  =  GRPCClient.get("productDB")
+        print(data)
         data = data.replace("\'", "\"")
         data = json.loads(data)
         # data = pickle.loads(inventory.__instance.redisDB.get("productDB"))

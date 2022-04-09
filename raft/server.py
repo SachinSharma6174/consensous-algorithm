@@ -11,6 +11,7 @@ app = Flask(__name__)
 @app.route("/request", methods=['GET'])
 def value_get():
     payload = request.json["payload"]
+    print("GET PAYLOAD", payload)
     reply = {"code": 'fail', 'payload': payload}
     if n.status == LEADER:
         # request handle, reply is a dictionary
@@ -27,7 +28,7 @@ def value_get():
 def value_put():
     payload = request.json["payload"]
     reply = {"code": 'fail'}
-
+    print("PUT PAYLOAD", payload)
     if n.status == LEADER:
         # request handle, reply is a dictionary
         result = n.handle_put(payload)
@@ -110,6 +111,6 @@ if __name__ == "__main__":
         http, host, port = my_ip.split(':')
         # initialize node with ip list and its own ip
         n = Node(ip_list, my_ip)
-        app.run(host="0.0.0.0", port=int(port), debug=False)
+        app.run(host="0.0.0.0", port=int(port), debug=True)
     else:
         print("usage: python server.py <index> <ip_list_file>")

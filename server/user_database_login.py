@@ -8,10 +8,12 @@ error_code = -1
 class user():
     
     def create_user(user_name, password):
+        print("Create User called for {}".format(user_name))
         try :
             exists = GRPCClient.exists(user_name)   
             if exists == "0":
                 user_id = GRPCClient.get("User_ID")
+                # user_id = 100
                 print("user_id ", user_id)
                 data = {'user_id' : user_id , 'password' :password}
                 GRPCClient.set(user_name,str(data))
@@ -25,6 +27,7 @@ class user():
             return (error_code,"Error has occured "+str(e))
         
     def login_user(user_name, password):
+        print("Login called for {}".format(user_name))
         try :
             exists = GRPCClient.exists(user_name)
             if exists == "0":
