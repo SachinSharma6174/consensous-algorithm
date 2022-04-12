@@ -3,11 +3,14 @@ import database_pb2
 import database_pb2_grpc
 import traceback
 
+grpc_server = '10.128.0.63:50051'
+
 class GRPCClient():
-    
+
+
     def exists(key):
         try :
-            with grpc.insecure_channel('localhost:50051') as channel:
+            with grpc.insecure_channel(grpc_server) as channel:
                 stub = database_pb2_grpc.redisOperationsStub(channel)
                 data = database_pb2.Request(message=key)
                 response = stub.exists(data)
@@ -19,7 +22,7 @@ class GRPCClient():
         
     def set(key,value):
         try :
-            with grpc.insecure_channel('localhost:50051') as channel:
+            with grpc.insecure_channel(grpc_server) as channel:
                 stub = database_pb2_grpc.redisOperationsStub(channel)
                 data = database_pb2.Request(message=key,val=value)
                 response = stub.set(data)
@@ -30,7 +33,7 @@ class GRPCClient():
         
     def get(key):
         try :
-            with grpc.insecure_channel('localhost:50051') as channel:
+            with grpc.insecure_channel(grpc_server) as channel:
                 stub = database_pb2_grpc.redisOperationsStub(channel)
                 data = database_pb2.Request(message=key)
                 response = stub.get(data)
@@ -41,7 +44,7 @@ class GRPCClient():
         
     def delete(key):
         try :
-            with grpc.insecure_channel('localhost:50051') as channel:
+            with grpc.insecure_channel(grpc_server) as channel:
                 stub = database_pb2_grpc.redisOperationsStub(channel)
                 data = database_pb2.Request(message=key)
                 response = stub.delete(data)

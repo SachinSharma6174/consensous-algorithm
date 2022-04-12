@@ -13,7 +13,7 @@ app = Flask(__name__)
 class seller_server:
     
     def __init__(self):
-        host='127.0.0.1'
+        host='0.0.0.0'
         port=1200
         app.run(host=host, port=port, debug=True)
     
