@@ -31,7 +31,7 @@ class user():
         try :
             exists = GRPCClient.exists(user_name)
             if exists == "0":
-                return "No such user"
+                return (error_code,"No such user")
             else :
                 val = GRPCClient.get(user_name)
                 val = val.replace("\'", "\"")
