@@ -3,7 +3,7 @@ import json
 import pickle
 import traceback
 import grpc_client
-from grpc_client import GRPCClient
+from grpc_client_2 import GRPCClient
 
 SUCCESS_CODE = 1
 ERROR_CODE = -1
@@ -14,11 +14,13 @@ class inventory():
 
     def initializeDB(self):
         response = GRPCClient.exists("productDB")
-        if(response == "0"):
+        print("Response productDB :", response)
+        if(response == "False"):
             data_instance = {'items':[]}
             GRPCClient.set("productDB",str(data_instance))
         response = GRPCClient.exists("trxnDB")    
-        if(response=="0"):
+        print("trxnDB productDB :", response)
+        if(response == "False"):
             data_instance = {'trxns':[]}
             GRPCClient.set("trxnDB",str(data_instance))
 
@@ -35,7 +37,7 @@ class inventory():
         # check if item is already there. 
         item_ids = []
         data  =  GRPCClient.get("productDB")
-        print(data)
+        print("DATA RECVD ",data)
         data = data.replace("\'", "\"")
         data = json.loads(data)
         # data = pickle.loads(inventory.__instance.redisDB.get("productDB"))

@@ -40,7 +40,8 @@ class RedisOperations(database_pb2_grpc.redisOperationsServicer):
         # val = self.redis_client.get(key)
         val = self.get__raft(self.addr, key)
         print(f'received request: {request} with context {context}', flush=True)
-        return database_pb2.Reply(message=str(val.decode('utf-8')))
+        return database_pb2.Reply(message=str(val))
+        # return database_pb2.Reply(message=str(val.decode('utf-8')))
     
     def set(self, request, context):
         print("Set called ", flush=True)
@@ -64,7 +65,7 @@ class RedisOperations(database_pb2_grpc.redisOperationsServicer):
 
 #  New Logic to Use Raft instead of REDIS
 
-    def redirectToLeader(self,server_address, message):
+    def redirectToLeader(self,server_address,path, message):
         type = message["type"]
         # looping until someone tells he is the leader
         while True:
@@ -90,7 +91,7 @@ class RedisOperations(database_pb2_grpc.redisOperationsServicer):
             if response.status_code == 200 and "payload" in response.json():
                 payload = response.json()["payload"]
                 if "message" in payload:
-                    server_address = payload["message"] + "/request"
+                    server_address = payload["message"] + path
                 else:
                     break
             else:
@@ -103,47 +104,57 @@ class RedisOperations(database_pb2_grpc.redisOperationsServicer):
 
     def delete_raft(self,addr, key, value):
         server_address = addr + "/request/delete"
-        payload = {'key': key, 'value': value}
-        message = {"type": "delete", "payload": payload}
+        payload = {'key': key, 'flag':'delete'}
+        message = {"type": "put", "payload": payload}
         # redirecting till we find the leader, in case of request during election
-        response = self.redirectToLeader(server_address, message)
+        response = self.redirectToLeader(server_address,"/request/delete" ,message)
         print(response)
-        return response
+        status = response['code']
+        return status
 
 
     def exists__raft(self,addr, key):
         server_address = addr + "/request/exists"
         payload = {'key': key}
-        message = {"type": "exists", "payload": payload}
+        message = {"type": "get", "payload": payload}
         # redirecting till we find the leader, in case of request during election
-        response = self.redirectToLeader(server_address, message)
+        response = self.redirectToLeader(server_address, "/request/exists" ,message)
+        db_status = response['payload']['value']
         print(response)
-        return response
+        return db_status
 
     def put__raft(self,addr, key, value):
         server_address = addr + "/request"
         payload = {'key': key, 'value': value}
         message = {"type": "put", "payload": payload}
         # redirecting till we find the leader, in case of request during election
-        response = self.redirectToLeader(server_address, message)
+        response = self.redirectToLeader(server_address, "/request" ,message)
+        status = response['code']
         print(response)
-        return response
+        return status
 
     def get__raft(self,addr, key):
         server_address = addr + "/request"
         payload = {'key': key}
         message = {"type": "get", "payload": payload}
         # redirecting till we find the leader, in case of request during election
-        response = self.redirectToLeader(server_address, message)
+        response = self.redirectToLeader(server_address, "/request",message)
         print(response)
-        return response
+        val = response['payload']['value']
+        return val
 
 
-    def testRaft(self):
-        addr = "127.0.0.1"
-        key = "item"
-        self.get(addr, key)
-        self.put(addr, key)
-        self.exists(addr, key)
-        self.delete(addr, key)
+    # def testRaft(self):
+    #     addr = "127.0.0.1"
+    #     key = "item"
+    #     self.get(addr, key)
+    #     self.put(addr, key)
+    #     self.exists(addr, key)
+    #     self.delete(addr, key)
 
+
+# Put Response {'code': 'success'}
+# Get Response {'code': 'success', 'payload': {'key': 'Nisha', 'value': 1000}}
+# Exist Response {'code': 'success', 'payload': {'key': 'Nisha', 'value': True}}
+# Delete Response {'code': 'success'}
+# Exist-2 Response {'code': 'success', 'payload': {'key': 'Nisha', 'value': False}}

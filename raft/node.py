@@ -226,15 +226,13 @@ class Node():
         else:
             return None
 
-#  Exists check
     def handle_exists(self, payload):
-        print("getting", payload)
+        print("If key exists", payload)
         key = payload["key"]
+        payload["value"] = False
         if key in self.DB:
             payload["value"] = True
-            return payload
-        else:
-            return None
+        return payload
 
     # takes a message and an array of confirmations and spreads it to the followers
     # if it is a comit it releases the lock
@@ -247,7 +245,7 @@ class Node():
         if lock:
             lock.release()
 
-    def handle_put(self, payload, isDelete = False):
+    def handle_put(self, payload):
         print("putting", payload)
 
         # lock to only handle one request at a time
@@ -281,21 +279,25 @@ class Node():
             "action": "commit",
             "commitIdx": self.commitIdx
         }
-        self.commit(isDelete = True)
+        self.commit()
         threading.Thread(target=self.spread_update,
                          args=(commit_message, None, self.lock)).start()
         print("majority reached, replied to client, sending message to commit")
         return True
 
     # put staged key-value pair into local database
-    def commit(self,isDelete = False):
+    def commit(self):
         self.commitIdx += 1
         self.log.append(self.staged)
         key = self.staged["key"]
-        value = self.staged["value"]
-        if isDelete:
-            del self.DB[key]
+        if "flag" in self.staged:
+            flag = self.staged["flag"]
+            if flag == "delete":
+                if key in self.DB:
+                    del self.DB[key] 
         else:
-            self.DB[key] = value
+            value = self.staged["value"]
+            self.DB[key] = value 
+        
         # empty the staged so we can vote accordingly if there is a tie
         self.staged = None

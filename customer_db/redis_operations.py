@@ -4,14 +4,13 @@ import json
 import pickle
 import database_pb2
 import database_pb2_grpc
-from server import udp_server
 import traceback
+import socket
 
 
 
-UDP_SOCKET_IP_LIST = ["127.0.0.1", "127.0.0.1", "127.0.0.1", "127.0.0.1"]
-UDP_SOCKET_PORTS_LIST = [2222, 2223, 2224, 2225]
-
+# UDP_SOCKET_IP_LIST = ["127.0.0.1", "127.0.0.1", "127.0.0.1", "127.0.0.1"]
+# UDP_SOCKET_PORTS_LIST = [2222, 2223, 2224, 2225]
 
 class RedisOperations(database_pb2_grpc.redisOperationsServicer):
 
@@ -24,7 +23,9 @@ class RedisOperations(database_pb2_grpc.redisOperationsServicer):
             socket_timeout=None
         )
         self.set_user_id()
-        self.server = udp_server()
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.ip = '0.0.0.0'
+        self.port = 2222
     
     def set_user_id(self):
         if self.redis_client.exists("User_ID") == 0:
@@ -48,13 +49,11 @@ class RedisOperations(database_pb2_grpc.redisOperationsServicer):
     
     def set(self, request, context):
         print("Set called ", flush=True)
-        print(request.message+" check this "+request.val, flush=True)
         try:
             key = request.message
             val = request.val
-            # val = self.redis_client.set(key,val)
-            client_request = {'key':key, 'value':val , 'function':'set'}
-            self.server.sendBroadcastMessage(client_request)
+            client_request = {'key':key, 'value':val , 'function':'set', 'messageType':'client_message'}
+            self.sock.sendto(json.dumps(client_request).encode(), (self.ip, self.port))
         except Exception as e :
             traceback.print_exc()
             print("Exception has occured {}".format(str(e)))
@@ -69,8 +68,8 @@ class RedisOperations(database_pb2_grpc.redisOperationsServicer):
         try:
             key = request.message
             # val = self.redis_client.delete(key)
-            client_request = {'key':key, 'function':'delete'}
-            self.server.sendBroadcastMessage(client_request)
+            client_request = {'key':key, 'function':'delete','messageType':'client_message'}
+            self.sock.sendto(json.dumps(client_request).encode(), (self.ip, self.port))
         except Exception as e:
             traceback.print_exc()
             print("Exception has occured {}".format(str(e)))

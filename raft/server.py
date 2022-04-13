@@ -11,7 +11,6 @@ app = Flask(__name__)
 @app.route("/request", methods=['GET'])
 def value_get():
     payload = request.json["payload"]
-    print("GET PAYLOAD", payload)
     reply = {"code": 'fail', 'payload': payload}
     if n.status == LEADER:
         # request handle, reply is a dictionary
@@ -23,12 +22,42 @@ def value_get():
         reply["payload"]["message"] = n.leader
     return jsonify(reply)
 
+@app.route("/request/exists", methods=['GET'])
+def value_exists():
+    payload = request.json["payload"]
+    reply = {"code": 'fail', 'payload': payload}
+    if n.status == LEADER:
+        # request handle, reply is a dictionary
+        result = n.handle_exists(payload)
+        if result:
+            reply = {"code": "success", "payload": result}
+    elif n.status == FOLLOWER:
+        # redirect request
+        reply["payload"]["message"] = n.leader
+    return jsonify(reply)
+
+
+@app.route("/request/delete", methods=['PUT'])
+def value_delete():
+    payload = request.json["payload"]
+    reply = {"code": 'fail'}
+
+    if n.status == LEADER:
+        # request handle, reply is a dictionary
+        result = n.handle_put(payload)
+        if result:
+            reply = {"code": "success"}
+    elif n.status == FOLLOWER:
+        # redirect request
+        payload["message"] = n.leader
+        reply["payload"] = payload
+    return jsonify(reply)
 
 @app.route("/request", methods=['PUT'])
 def value_put():
     payload = request.json["payload"]
     reply = {"code": 'fail'}
-    print("PUT PAYLOAD", payload)
+
     if n.status == LEADER:
         # request handle, reply is a dictionary
         result = n.handle_put(payload)
@@ -51,37 +80,6 @@ def vote_req():
     choice, term = n.decide_vote(term, commitIdx, staged)
     message = {"choice": choice, "term": term}
     return jsonify(message)
-
-# Delete API
-@app.route("/request/delete", methods=['POST'])
-def value_delete():
-    payload = request.json["payload"]
-    reply = {"code": 'fail'}
-    if n.status == LEADER:
-        # request handle, reply is a dictionary
-        result = n.handle_put(payload, isDelete = True )
-        if result:
-            reply = {"code": "success"}
-    elif n.status == FOLLOWER:
-        # redirect request
-        payload["message"] = n.leader
-        reply["payload"] = payload
-    return jsonify(reply)
-
-# Exists API
-@app.route("/request/exists", methods=['GET'])
-def value_exists():
-    payload = request.json["payload"]
-    reply = {"code": 'fail', 'payload': payload}
-    if n.status == LEADER:
-        # request handle, reply is a dictionary
-        result = n.handle_exists(payload)
-        if result:
-            reply = {"code": "success", "payload": result}
-    elif n.status == FOLLOWER:
-        # redirect request
-        reply["payload"]["message"] = n.leader
-    return jsonify(reply)
 
 
 @app.route("/heartbeat", methods=['POST'])
@@ -111,6 +109,6 @@ if __name__ == "__main__":
         http, host, port = my_ip.split(':')
         # initialize node with ip list and its own ip
         n = Node(ip_list, my_ip)
-        app.run(host="0.0.0.0", port=int(port), debug=True)
+        app.run(host="0.0.0.0", port=int(port), debug=False)
     else:
         print("usage: python server.py <index> <ip_list_file>")

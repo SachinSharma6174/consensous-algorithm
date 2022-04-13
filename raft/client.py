@@ -1,8 +1,9 @@
 import sys, requests
 
 
-def redirectToLeader(server_address, message):
+def redirectToLeader(server_address, path , message):
     type = message["type"]
+    # path = server_address
     # looping until someone tells he is the leader
     while True:
         # switching between "get" and "put"
@@ -26,7 +27,7 @@ def redirectToLeader(server_address, message):
         if response.status_code == 200 and "payload" in response.json():
             payload = response.json()["payload"]
             if "message" in payload:
-                server_address = payload["message"] + "/request"
+                server_address = payload["message"] + path
             else:
                 break
         else:
@@ -43,7 +44,7 @@ def put(addr, key, value):
     payload = {'key': key, 'value': value}
     message = {"type": "put", "payload": payload}
     # redirecting till we find the leader, in case of request during election
-    print(redirectToLeader(server_address, message))
+    return redirectToLeader(server_address, "/request" ,message)
 
 
 # client get request
@@ -52,20 +53,38 @@ def get(addr, key):
     payload = {'key': key}
     message = {"type": "get", "payload": payload}
     # redirecting till we find the leader, in case of request during election
-    print(redirectToLeader(server_address, message))
+    return redirectToLeader(server_address, "/request" , message)
+
+def exists(addr, key):
+    server_address = addr + "/request/exists"
+    payload = {'key': key}
+    message = {"type": "get", "payload": payload}
+    # redirecting till we find the leader, in case of request during election
+    return redirectToLeader(server_address, "/request/exists", message)
+
+def delete(addr, key):
+    server_address = addr + "/request/delete"
+    payload = {'key': key, 'flag':'delete'}
+    message = {"type": "put", "payload": payload}
+    # redirecting till we find the leader, in case of request during election
+    return redirectToLeader(server_address,"/request/delete" , message)
 
 
 if __name__ == "__main__":
     # addr, key
     # get
-    addr = "http://127.0.0.1:5000"
+    addr = "http://127.0.0.1:5001"
     # addr = sys.argv[1]
     key = "Nisha"
-    get(addr, key)
+    val = 1000
+    print("Put Response", put(addr, key, val))
+    print("Get Response", get(addr, key))
+    print("Exist Response", exists(addr, key))
+    print("Delete Response", delete(addr, key))
+    print("Exist-2 Response", exists(addr, key))
     # addr, key value
     # put
-    val = 1000
-    put(addr, key, val)
+    
     # else:
     #     print("PUT usage: python3 client.py address 'key' 'value'")
     #     print("GET usage: python3 client.py address 'key'")

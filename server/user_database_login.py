@@ -58,6 +58,7 @@ class user():
             return (error_code,"Error has occured" +str(e))
     
     def validate_user(user_id):
+        #return True
         try:
             return True
             exists = GRPCClient.exists(user_id)
