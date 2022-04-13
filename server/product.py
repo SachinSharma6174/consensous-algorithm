@@ -3,7 +3,7 @@ import json
 import pickle
 import traceback
 import grpc_client
-from grpc_client import GRPCClient
+from grpc_client_2 import GRPCClient
 
 SUCCESS_CODE = 1
 ERROR_CODE = -1
