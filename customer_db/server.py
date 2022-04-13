@@ -1,3 +1,4 @@
+from email import message
 import socket
 import json
 from atomic_broadcast import AtomicBroadcastProtocol
@@ -6,7 +7,7 @@ from atomic_broadcast import AtomicBroadcastProtocol
 class udp_server():
     # TODO : Filter SELF IP while sending 
     # UDP_SOCKET_IP_LIST = ["127.0.0.1","127.0.0.1", "127.0.0.1", "127.0.0.1"]
-    UDP_SOCKET_IP_LIST = ["0.0.0.0","10.128.15.192"]
+    UDP_SOCKET_IP_LIST = ["0.0.0.0","0.0.0.0"]
     # UDP_SOCKET_PORTS_LIST = [2222,2223, 2224, 2225]
     UDP_SOCKET_PORTS_LIST = [2222,2223]
 
@@ -17,8 +18,8 @@ class udp_server():
     global_seq_num = -1
     global_seq_recved = -1
     # To check before assigning global seq number 
-    local_seq_commit = [-1,-1,-1,-1]
-    last_global_seq_recvd = [-1,-1,-1,-1]
+    local_seq_commit = [-1,-1]
+    last_global_seq_recvd = [-1,-1]
 
     local_seq_num = 0
     node_id = 0
@@ -28,12 +29,12 @@ class udp_server():
     request_id_to_msg_map = {}
     recieveBuffer = []
     abcast = AtomicBroadcastProtocol()
-
+        
 
     def heart_beat_message(self):
         print("Exchanging heart beat message ")
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        data = {'last_global_seq_revd': self.last_global_seq_recvd, 'messageType':'heartbeat_message'}
+        data = {'last_global_seq_recvd': self.last_global_seq_recvd, 'messageType':'heartbeat_message'}
         for ip,port in zip(self.UDP_SOCKET_IP_LIST,self.UDP_SOCKET_PORTS_LIST):
             try:
                 if port == self.CURRENT_SERVER_UDP_PORT:
@@ -47,11 +48,14 @@ class udp_server():
 
     def process_seq_message(self,data):
         print("Process seq message {}".format(str(data)))
-        self.heart_beat_message()
-        self.global_seq_num, self.global_seq_recvd,  self.global_seq_to_req_map, self.local_seq_commit, self.last_global_seq_recvd, self.recieveBuffer = self.abcast.process_seq_message(
+        self.global_seq_num, self.global_seq_recved, self.global_seq_to_req_map, self.local_seq_commit, self.last_global_seq_recvd, self.recieveBuffer = self.abcast.process_seq_message(
         self.node_id, data, self.local_seq_num, self.global_seq_num, self.global_seq_recved, 
         self.local_seq_commit, self.global_seq_to_req_map, self.request_id_to_msg_map, self.last_global_seq_recvd,
         self.recieveBuffer, self.UDP_SOCKET_IP_LIST, self.UDP_SOCKET_PORTS_LIST)
+        print("Should call heartbeat message now. {}".format(data))
+        if (data["messageType"] == "sequence_message"):
+            self.heart_beat_message()
+        print("Check the recvf buffer {}".format(self.recieveBuffer))
 
     def process_recvd_message(self, data):
         print("Process req message {}".format(str(data)))
@@ -64,6 +68,7 @@ class udp_server():
                     self.node_id, data, self.local_seq_num, self.global_seq_num, self.global_seq_recved, 
                     self.local_seq_commit, self.global_seq_to_req_map, self.request_id_to_msg_map, self.last_global_seq_recvd,
                     self.recieveBuffer, self.UDP_SOCKET_IP_LIST, self.UDP_SOCKET_PORTS_LIST)
+        print("Check the recvd buffer {}".format(str(self.recieveBuffer)))
     
     def process_retransmit_message(self,data):  
         if self.global_seq_to_req_map['request_id'] == data['request_id']:
@@ -101,8 +106,6 @@ class udp_server():
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         for ip,port in zip(self.UDP_SOCKET_IP_LIST,self.UDP_SOCKET_PORTS_LIST):
             try:
-                if port == self.CURRENT_SERVER_UDP_PORT:
-                    continue
                 print("Sending Broadcase message {}".format(data))
                 print("UDP target IP: %s" % ip)
                 print("UDP target port: %s" % port)
@@ -110,9 +113,7 @@ class udp_server():
             except Exception as e:
                 print(e)
         print("calling process recieved message ")
-        self.process_recvd_message(data)
-        local_seq_num = self.local_seq_num + 1
-        self.flag = 0 
+        self.local_seq_num = self.local_seq_num + 1
 
 
 if __name__ == "__main__":
@@ -129,6 +130,8 @@ if __name__ == "__main__":
         # data = {'request_id':key,'messageType':'retransmit_message','requestor_id':node_id}
         
         print("Message {} recieved from UDP server ".format(str(data)))
+        if (data["messageType"] == 'client_message'):
+            server.sendBroadcastMessage(data)
         if (data['messageType'] == 'request_message'):
             server.process_recvd_message(data)
         if (data["messageType"] == "sequence_message"):
