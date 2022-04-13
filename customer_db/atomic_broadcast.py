@@ -17,7 +17,7 @@ class AtomicBroadcastProtocol():
         response = None
         print("Performing action on Redis DB {}".format(message))
         key  = message['key']
-        if message['messageType'] == 'client':
+        if message['messageType'] == 'client_message':
             if message['function'] == 'delete':
                 response = self.redis_client.delete(key)
             if message['function'] == 'set':
