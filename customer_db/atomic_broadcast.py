@@ -39,9 +39,9 @@ class AtomicBroadcastProtocol():
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         for ip,port in zip(udpIpList,udpPortList):
             try:
-                if port == udpPortList[node_id]:
-                    continue
-                print("Called from send_sequence message : {}".format(str(sequence_msg)))
+                #if port == udpPortList[node_id]:
+                #    continue
+                print("Sending sequence message send_sequence message : {}".format(str(sequence_msg)))
                 print("UDP target IP: %s" % ip)
                 print("UDP target port: %s" % port)
                 sock.sendto(json.dumps(sequence_msg).encode(), (ip, port))
@@ -86,12 +86,17 @@ class AtomicBroadcastProtocol():
         if last_global_seq_recvd[sender] + 1 == global_seq_curr:
             last_global_seq_recvd[sender]  = global_seq_curr
         
-        while  global_seq_num  <= global_seq_curr :
+        while  global_seq_num  < global_seq_curr :
             # calculate majority global seq number
             if (self.calculate_majority(last_global_seq_recvd, global_seq_num)):
+                continue
+            else:
                 if (global_seq_num + 1) in global_seq_to_req_map: 
+                    print ("Check the dic {}".format(str(global_seq_to_req_map)))
+                    print("Check the req dic {}".format(str(request_id_to_msg_map)))
                     request_id = global_seq_to_req_map[global_seq_num + 1]
-                    if request_id in request_id_to_msg_map: 
+                    if str(request_id) in request_id_to_msg_map: 
+                        print("request_id {} found ".format(str(request_id)))
                         client_req = request_id_to_msg_map[request_id]
                         self.redisAction(client_req['data'])
                         req_messg_sender = request_id['sender_id']
@@ -106,11 +111,13 @@ class AtomicBroadcastProtocol():
                         # Ask for retransmit of request message
                         self.retransmit_message(request_id['sender_id'], request_id, node_id, 
                                                 "request_retransmit_message", udpIpList, udpPortList)
+                        break
                 else :
                     # Ask for retransmit for global seq message 
                     global_seq_holder_node = (global_seq_num + 1) % total_proc
                     self.retransmit_message(global_seq_holder_node, global_seq_num + 1, node_id, 
                                                 "sequence_restransmit_message", udpIpList, udpPortList)
+                    break
         return global_seq_num, global_seq_recved, global_seq_to_req_map, local_seq_commit, last_global_seq_recvd, recieveBuffer
     
     def processRecieveMessage(self, node_id, message, local_seq_num, global_seq_num, \

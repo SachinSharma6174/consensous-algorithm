@@ -48,7 +48,6 @@ class RedisOperations(database_pb2_grpc.redisOperationsServicer):
     
     def set(self, request, context):
         print("Set called ", flush=True)
-        print(request.message+" check this "+request.val, flush=True)
         try:
             key = request.message
             val = request.val
